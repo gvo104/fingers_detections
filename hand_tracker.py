@@ -16,11 +16,13 @@ class HandTracker:
         
     def process(self, img):
         if img is None:
-            return img
-            
+            return img, None  # Теперь возвращается также список координат
+        
         img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         results = self.hands.process(img_rgb)
-        
+
+        landmarks_px = None  # список координат в пикселях
+
         if results.multi_hand_landmarks:
             for hand_landmarks in results.multi_hand_landmarks:
                 # Отрисовка связей
@@ -29,13 +31,17 @@ class HandTracker:
                     hand_landmarks,
                     self.mp_hands.HAND_CONNECTIONS,
                     self.landmark_style)
-                
-                # Отрисовка точек
+
+                # Преобразование нормализованных координат в пиксели
+                h, w = img.shape[:2]
+                landmarks_px = []
                 for id, lm in enumerate(hand_landmarks.landmark):
-                    h, w = img.shape[:2]
                     cx, cy = int(lm.x * w), int(lm.y * h)
+                    landmarks_px.append((cx, cy))
+
+                    # Отрисовка точек
                     if id == 8:  # Кончик указательного пальца
                         cv2.circle(img, (cx, cy), 10, (255, 0, 255), cv2.FILLED)
                     cv2.circle(img, (cx, cy), 3, (255, 0, 255), cv2.FILLED)
         
-        return img
+        return img, landmarks_px

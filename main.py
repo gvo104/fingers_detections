@@ -1,6 +1,8 @@
 import cv2
 from hand_tracker import HandTracker
 from face_tracker import FaceTracker
+from gesture_detector import detect_gesture
+from gesture_handler import GestureHandler
 
 def main():
     # Инициализация камеры
@@ -26,6 +28,7 @@ def main():
     # Инициализация трекеров
     hand_tracker = HandTracker()
     face_tracker = FaceTracker()
+    gesture_handler = GestureHandler()
 
     try:
         while True:
@@ -36,21 +39,27 @@ def main():
 
             # Зеркальное отражение
             frame = cv2.flip(frame, 1)
-            
-            # Обработка трекерами
-            frame = hand_tracker.process(frame)
+
+            # Обработка руки и получение координат
+            frame, landmarks = hand_tracker.process(frame)
+
+            # Обработка лица (если нужно)
             frame = face_tracker.process(frame)
-            
+
+            # Определение жеста и выполнение действия
+            gesture = detect_gesture(landmarks)
+            gesture_handler.handle_gesture(gesture)
+
             # Отображение подсказки
             cv2.putText(frame, "Q - выход", (10, 30), 
                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-            
+
             # Показ результата
             cv2.imshow('Hand & Face Tracking', frame)
 
-            # Запись обработанного кадра в видеофайл
+            # Запись кадра
             out.write(frame)
-            
+
             # Выход по клавише Q
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
