@@ -1,0 +1,9 @@
+﻿__pycache__/
+my_project_env/
+results_video/
+*.pyc
+*.pyd
+*.mp4
+*.env
+.DS_Store
+Thumbs.db
