@@ -30,7 +30,7 @@ def detect_gesture(landmarks):
         return "point_right"
 
     # 3. Большой и мизинец подняты
-    if fingers == [1, 0, 0, 0, 1]:
+    if fingers == [1, 1, 1, 0, 0]:
         return "point_left"
 
     # Можно добавлять и другие жесты

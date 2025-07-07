@@ -49,7 +49,7 @@ class GestureHandler:
 
     def open_file(self):
         print("Открытие локального файла...")
-        file_path = r"C:\Users\galki\Pictures\рабочий_стол\andrew-andreev-lake.jpg"
+        file_path = r"D:\1131_GVO_Ispitaniya.pptx"  #ПОПРАВИТЬ ВЫЗОВ НЕ ЛИСТАЕТСЯ
         try:
             os.startfile(file_path)
         except Exception as e:

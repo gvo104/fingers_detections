@@ -1,5 +1,4 @@
 ﻿__pycache__/
-my_project_env/
 results_video/
 *.pyc
 *.pyd
@@ -7,3 +6,4 @@ results_video/
 *.env
 .DS_Store
 Thumbs.db
+my_project_env/
