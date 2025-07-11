@@ -19,7 +19,7 @@ def main():
     face_tracker = FaceTracker()
     gesture_handler = GestureHandler()
 
-    model_path = os.path.join(os.path.dirname(__file__), "train_modul", "SCV", "model.joblib")
+    model_path = os.path.join(os.path.dirname(__file__), "train_modul", "CSV", "model.joblib")
     model_predictor = ModelPredictor(model_path)
 
     face_detection_enabled = False

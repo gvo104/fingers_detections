@@ -7,16 +7,34 @@ class DataSaver:
         self.batch_size = batch_size
         self.buffer = []
 
-        # Перезапись файла и запись заголовка
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         with open(self.filename, mode='w', newline='') as f:
             writer = csv.writer(f)
-            writer.writerow([
-                "label",
-                "delta_x", "delta_total", "velocity", "angle", "delta_tip2",
-                "dist_thumb", "dist_index", "dist_middle", "dist_ring", "dist_pinky",
-                "index_ratio"
-            ])
+            writer.writerow(self._generate_header())
+
+    def _generate_header(self):
+        header = ["label"]
+
+        # 1. Относительные координаты (21 точки × 2)
+        for i in range(21):
+            header.append(f"rel_x_{i}")
+            header.append(f"rel_y_{i}")
+
+        # 2. Расстояния до кончиков пальцев
+        for name in ["thumb", "index", "middle", "ring", "pinky"]:
+            header.append(f"dist_{name}")
+
+        # 3. Вектор запястье → указательный палец
+        header += ["vec_wrist_index_x", "vec_wrist_index_y"]
+
+        # 4. По 3 временных интервала:
+        for t in range(3):
+            for i in range(21):
+                header.append(f"delta_x_t{t}_{i}")
+                header.append(f"delta_y_t{t}_{i}")
+            header += [f"v_x_t{t}", f"v_y_t{t}", f"a_x_t{t}", f"a_y_t{t}"]
+
+        return header
 
     def add_row(self, row):
         self.buffer.append(row)

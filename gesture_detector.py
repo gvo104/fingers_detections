@@ -3,7 +3,7 @@ from model_predictor import ModelPredictor
 import os
 
 # Инициализация модели (один раз)
-model_path = os.path.join(os.path.dirname(__file__), "train_modul", "SCV", "model.joblib")
+model_path = os.path.join(os.path.dirname(__file__), "train_modul", "CSV", "model.joblib")
 model_predictor = ModelPredictor(model_path)
 
 def detect_gesture(landmarks, predictor=None):

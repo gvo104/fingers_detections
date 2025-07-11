@@ -1,37 +1,78 @@
 import numpy as np
 
 def extract_features_from_window(buffer):
-    """Извлекает признаки движения и формы руки (60 кадров)."""
-    if len(buffer) < 60:
+    """
+    Извлекает признаки из буфера на 180 кадров:
+    - Относительные координаты ладони (1-й кадр)
+    - Расстояния от запястья до кончиков пальцев
+    - Вектор запястье → указательный палец
+    - Для трёх сегментов (0-60, 60-120, 120-180):
+        - Смещения
+        - Средняя скорость (x, y)
+        - Среднее ускорение (x, y)
+    """
+
+    if len(buffer) < 180:
         return None
 
-    start = buffer[0]
-    middle = buffer[30]
-    end = buffer[59]
+    features = []
 
-    # === 1. Динамика ===
-    delta_wrist = np.array(end[0]) - np.array(start[0])
-    delta_x, delta_y = delta_wrist[0], delta_wrist[1]
-    delta_total = np.linalg.norm(delta_wrist)
-    velocity = delta_total / 60
-    angle = np.arctan2(delta_y, delta_x)
+    # === 1. Относительные координаты landmark'ов (первый кадр) ===
+    frame0 = buffer[0]
+    if frame0 is None:
+        return None
 
-    # Δ указательного пальца
-    delta_tip2 = np.linalg.norm(np.array(end[8]) - np.array(start[8]))
+    wrist = np.array(frame0[0])
+    rel_coords = []
+    for i in range(21):
+        point = np.array(frame0[i])
+        rel = point - wrist
+        rel_coords.extend(rel)
 
-    dynamic = [delta_x, delta_total, velocity, angle, delta_tip2]
+    features.extend([round(x, 5) for x in rel_coords])
 
-    # === 2. Статика формы руки ===
-    wrist = np.array(middle[0])
+    # === 2. Расстояния от запястья до кончиков пальцев (статические признаки) ===
     fingertips_idx = [4, 8, 12, 16, 20]
-    dists = [np.linalg.norm(np.array(middle[i]) - wrist) for i in fingertips_idx]
-    d_4, d_8, d_12, d_16, d_20 = dists
+    dists = [np.linalg.norm(np.array(frame0[i]) - wrist) for i in fingertips_idx]
+    features.extend([round(d, 5) for d in dists])
 
-    avg_other = np.mean([d_12, d_16, d_20])
-    index_ratio = d_8 / (avg_other + 1e-5)  # избежание деления на 0
+    # === 3. Вектор "запястье → указательный палец" ===
+    vec = np.array(frame0[8]) - wrist
+    features.extend([round(vec[0], 5), round(vec[1], 5)])
 
-    static = dists + [index_ratio]
+    # === 4. Динамика в трёх временных отрезках ===
+    intervals = [(0, 60), (60, 120), (120, 180)]
+    for (start, end) in intervals:
+        A = buffer[start]
+        B = buffer[end - 1]
+        if A is None or B is None:
+            return None
 
-    # Округление до 3 знаков
-    all_features = dynamic + static
-    return [round(f, 3) for f in all_features]
+        A = np.array(A)
+        B = np.array(B)
+
+        # Δ (смещение)
+        delta = B - A
+        features.extend([round(val, 5) for val in delta.flatten()])
+
+        # Скорость (по x и y)
+        v = delta / (end - start)
+        vx_mean = np.mean(v[:, 0])
+        vy_mean = np.mean(v[:, 1])
+        features.extend([round(vx_mean, 5), round(vy_mean, 5)])
+
+        # Ускорение (на основе предыдущего интервала)
+        if start >= 60:
+            A_prev = buffer[start - 60]
+            B_prev = buffer[end - 61]
+            if A_prev is None or B_prev is None:
+                return None
+            prev_v = (np.array(B_prev) - np.array(A_prev)) / 60
+            acc = (v - prev_v) / 60
+            acc_x = np.mean(acc[:, 0])
+            acc_y = np.mean(acc[:, 1])
+            features.extend([round(acc_x, 5), round(acc_y, 5)])
+        else:
+            features.extend([0.0, 0.0])
+
+    return features
