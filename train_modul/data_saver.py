@@ -15,24 +15,23 @@ class DataSaver:
     def _generate_header(self):
         header = ["label"]
 
-        # 1. Относительные координаты (21 точки × 2)
-        for i in range(21):
-            header.append(f"rel_x_{i}")
-            header.append(f"rel_y_{i}")
+        # === 1. Статические признаки ===
+        header.append("all_landmarks_visible")
+        for finger in ["thumb", "index", "middle", "ring", "pinky"]:
+            header.append(f"{finger}_extended")
 
-        # 2. Расстояния до кончиков пальцев
-        for name in ["thumb", "index", "middle", "ring", "pinky"]:
-            header.append(f"dist_{name}")
+        # === 2. Динамика (смещение, скорость, ускорение) ===
+        # Для 3-х интервалов, для запястья и кончика указательного пальца
+        parts = ["wrist", "index_tip"]
+        intervals = ["t0", "t1", "t2"]
 
-        # 3. Вектор запястье → указательный палец
-        header += ["vec_wrist_index_x", "vec_wrist_index_y"]
-
-        # 4. По 3 временных интервала:
-        for t in range(3):
-            for i in range(21):
-                header.append(f"delta_x_t{t}_{i}")
-                header.append(f"delta_y_t{t}_{i}")
-            header += [f"v_x_t{t}", f"v_y_t{t}", f"a_x_t{t}", f"a_y_t{t}"]
+        for t in intervals:
+            for part in parts:
+                header += [
+                    f"{part}_dx_{t}", f"{part}_dy_{t}",               # смещение
+                    f"{part}_vx_{t}", f"{part}_vy_{t}",               # скорость
+                    f"{part}_ax_{t}", f"{part}_ay_{t}"                # ускорение
+                ]
 
         return header
 
